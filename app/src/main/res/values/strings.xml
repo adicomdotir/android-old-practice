@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Android Old Practice</string>
+    <string name="title">Title</string>
+    <string name="note">Note</string>
+    <string name="date">Date</string>
+    <string name="delete">Delete</string>
 </resources>
