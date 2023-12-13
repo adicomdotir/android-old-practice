@@ -14,12 +14,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.cardview.widget.CardView
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import dagger.hilt.android.AndroidEntryPoint
 import ir.adicom.androidoldpractice.adapter.NoteAdapter
 import ir.adicom.androidoldpractice.database.NoteDatabase
 import ir.adicom.androidoldpractice.databinding.ActivityMainBinding
 import ir.adicom.androidoldpractice.models.Note
 import ir.adicom.androidoldpractice.models.NoteViewModel
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity(), NoteAdapter.NoteItemClickListener,
     PopupMenu.OnMenuItemClickListener {
 
@@ -38,6 +41,8 @@ class MainActivity : AppCompatActivity(), NoteAdapter.NoteItemClickListener,
                 }
             }
         }
+
+    @Inject lateinit var car: Car
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
