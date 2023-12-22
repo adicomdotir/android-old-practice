@@ -1,60 +1,153 @@
 package ir.adicom.androidoldpractice.presentation.pages.list
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.core.os.bundleOf
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import dagger.hilt.android.AndroidEntryPoint
 import ir.adicom.androidoldpractice.R
+import ir.adicom.androidoldpractice.databinding.FragmentListBinding
+import ir.adicom.androidoldpractice.domain.entities.Pokemon
+import ir.adicom.androidoldpractice.presentation.adapters.PokeListAdapter
+import ir.adicom.androidoldpractice.utils.Status
+import kotlinx.coroutines.launch
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [ListFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
-class ListFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+@AndroidEntryPoint
+class PokeListFragment : Fragment() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
+    lateinit var binding: FragmentListBinding
+
+    val listFragmentViewModel: PokeListViewModel by viewModels()
+
+    var offset = 0
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+
+        binding = FragmentListBinding.inflate(inflater, container, false)
+
+        binding.apply {
+            recycler.apply {
+                layoutManager = LinearLayoutManager(requireContext())
+            }
+        }
+
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        listFragmentViewModel.fetchPokemons()
+
+        observeData()
+
+        binding.apply {
+
+            btnRight.setOnClickListener {
+                callNext()
+            }
+
+            btnLeft.setOnClickListener {
+                callPrevious()
+            }
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_list, container, false)
-    }
+    private fun observeData() {
+        viewLifecycleOwner.lifecycleScope.launch {
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment ListFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            ListFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+            listFragmentViewModel.pokemonsState.collect {
+
+                when (it.status) {
+
+                    Status.LOADING -> {
+                        binding.progressBar.visibility = View.VISIBLE
+                        binding.recycler.visibility = View.GONE
+
+                        Log.i("PokeListFragment", "Loading...")
+                    }
+
+                    Status.SUCCESS -> {
+                        binding.progressBar.visibility = View.GONE
+                        binding.recycler.visibility = View.VISIBLE
+
+                        it.data?.let { pokeResponse ->
+                            val list: List<Pokemon> = pokeResponse.results!!.map { singlePokemon ->
+
+                                Pokemon(
+                                    name = singlePokemon.name,
+                                    url = singlePokemon.url,
+                                )
+                            }
+
+                            if (offset <= 0) {
+                                binding.apply {
+                                    btnLeft.isEnabled = false
+                                }
+                            } else {
+                                binding.btnLeft.isEnabled = true
+                            }
+
+                            binding.recycler.adapter = PokeListAdapter(list) { pokemon ->
+
+                                val bundle = bundleOf("name" to pokemon.name)
+                                view?.findNavController()
+                                    ?.navigate(R.id.action_listFragment_to_detailFragment, bundle)
+
+                            }
+
+                            Log.i("PokeListFragment", "Received poke list.")
+
+                        }
+                            ?: run {
+
+                                Log.e("PokeListFragment", "Error: Failed to fetch poke list.")
+                            }
+                    }
+
+
+                    // error occurred status
+                    else -> {
+                        binding.progressBar.visibility = View.GONE
+                        binding.recycler.visibility = View.GONE
+
+                        Toast.makeText(requireContext(), "${it.message}", Toast.LENGTH_SHORT)
+                            .show()
+
+                        Log.e("PokeListFragment", it.message.toString())
+                    }
                 }
             }
+        }
+    }
+
+    private fun callNext() {
+        offset += 20
+        listFragmentViewModel.fetchDataByOffset(offset = offset)
+    }
+
+    private fun callPrevious() {
+
+        if (offset <= 0) {
+            binding.apply {
+                btnLeft.isEnabled = false
+                btnRight.isEnabled = true
+            }
+        } else {
+            offset -= 20
+            listFragmentViewModel.fetchDataByOffset(offset = offset)
+        }
+
     }
 }
