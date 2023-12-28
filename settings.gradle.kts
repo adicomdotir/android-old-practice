@@ -30,8 +30,13 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
     }
+    versionCatalogs {
+        create("xxx") {
+            from(files("gradle/xxx.versions.toml"))
+        }
+    }
 }
 
 rootProject.name = "Android Old Practice"
 include(":app")
- 
+include(":mylibrary")

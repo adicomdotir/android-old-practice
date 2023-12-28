@@ -1,0 +1,1 @@
+/Users/yasharpanahi/AndroidStudioProjects/AndroidOldPractice/buildSrc/build/classes/kotlin/main/Configs.class:/Users/yasharpanahi/AndroidStudioProjects/AndroidOldPractice/buildSrc/build/classes/kotlin/main/Libraries.class:/Users/yasharpanahi/AndroidStudioProjects/AndroidOldPractice/buildSrc/build/classes/kotlin/main/Versions.class
