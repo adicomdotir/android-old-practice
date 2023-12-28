@@ -1,47 +1,44 @@
 package ir.adicom.androidoldpractice.di
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
+import android.content.Context
+import androidx.room.Room
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import ir.adicom.androidoldpractice.data.datasources.PokeService
-import ir.adicom.androidoldpractice.utils.Constants
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
+import ir.adicom.androidoldpractice.data.repositories.MealsRepository
+import ir.adicom.androidoldpractice.data.source.local.FavoriteDao
+import ir.adicom.androidoldpractice.data.source.remote.ApiService
+import ir.adicom.androidoldpractice.data.source.remote.MyDatabase
+import ir.adicom.androidoldpractice.utils.AppConstants
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 @Module
-@InstallIn(SingletonComponent::class)
+@InstallIn (SingletonComponent::class)
 class AppModule {
-    private val httpLoggingInterceptor by lazy {
-        HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-    }
 
-    private val okHttpClient by lazy {
-        OkHttpClient.Builder()
-            .addInterceptor(httpLoggingInterceptor)
-            .build()
-    }
-
+    @Provides
     @Singleton
+    fun provideMealsDataSource(mealsDatasource: ApiService, favoriteDao: FavoriteDao): MealsRepository {
+        return MealsRepository(mealsDatasource,favoriteDao)
+    }
+
     @Provides
-    fun provideRetrofit(): Retrofit =
-        Retrofit.Builder()
-            .client(okHttpClient)
+    @Singleton
+    fun provideMealsDao(): ApiService {
+        return Retrofit.Builder()
+            .baseUrl(AppConstants.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
-            .baseUrl(Constants.BASE_URL)
-            .build()
+            .build().create(ApiService::class.java)
+    }
 
     @Provides
-    fun providePokeService(retrofit: Retrofit): PokeService =
-        retrofit.create(PokeService::class.java)
-
-    @Provides
-    fun provideGson(): Gson = GsonBuilder().create()
+    @Singleton
+    fun provideFavoriteDao(@ApplicationContext context: Context): FavoriteDao {
+        val vt = Room.databaseBuilder(context, MyDatabase::class.java,"fav.sqlite").createFromAsset("fav.sqlite").build()
+        return vt.getFavoritesDao()
+    }
 }
