@@ -1,6 +1,5 @@
 package ir.adicom.mylibrary
 
-
 import com.google.gson.annotations.SerializedName
 
 data class CustomUser(

@@ -44,7 +44,7 @@ android {
 
 dependencies {
     implementation(project(mapOf("path" to ":mylibrary")))
-    
+
 
     implementation(Libraries.coreKtx)
     implementation(Libraries.appCompat)
@@ -69,13 +69,7 @@ dependencies {
     implementation(Libraries.navigationFragmentKtx)
     implementation(Libraries.navigationUiKtx)
 
-    // retrofit
-    implementation(Libraries.retrofit)
-    implementation(Libraries.converterGson)
-    implementation(Libraries.loggingInterceptor)
-
-    //gson
-    implementation(Libraries.gson)
+    network()
 
     testImplementation(Libraries.junit)
     androidTestImplementation(Libraries.extJunit)
