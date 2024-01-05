@@ -2,119 +2,70 @@ package ir.adicom.androidoldpractice
 
 import android.app.Activity
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.widget.PopupMenu
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import com.google.gson.GsonBuilder
 import dagger.hilt.android.AndroidEntryPoint
+import ir.adicom.androidoldpractice.data.repository.UserRepositoryImpl
+import ir.adicom.androidoldpractice.data.source.network.AppService
 import ir.adicom.androidoldpractice.databinding.ActivityMainBinding
+import ir.adicom.androidoldpractice.domain.model.Response
 import ir.adicom.mylibrary.CustomUser
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity(),
-    PopupMenu.OnMenuItemClickListener {
-
+class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-//    private lateinit var database: NoteDatabase
-//    lateinit var viewModel: NoteViewModel
-//    lateinit var adapter: NoteAdapter
-//    lateinit var selectedNote: Note
-
-    lateinit var customUser: CustomUser
-
-    private val updateNote =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-//                val note = result.data?.getSerializableExtra("note") as? Note
-//                if (note != null) {
-//                    viewModel.updateNote(note)
-//                }
-            }
-        }
-
-//    @Inject lateinit var car: Car
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-//        initUi()
+        val BASE_URL = "https://apitester.ir/api/"
 
-//        viewModel = ViewModelProvider(
-//            this,
-//            ViewModelProvider.AndroidViewModelFactory.getInstance(application)
-//        )[NoteViewModel::class.java]
-//
-//        viewModel.allNotes.observe(this) { list ->
-//            list?.let {
-//                adapter.updateList(list)
-//            }
-//        }
-//
-//        database = NoteDatabase.getDatabase(this)
-    }
+        val apiService = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(AppService::class.java)
 
-//    private fun initUi() {
-//        binding.recyclerView.setHasFixedSize(true)
-//        binding.recyclerView.layoutManager = StaggeredGridLayoutManager(2, LinearLayout.VERTICAL)
-//        adapter = NoteAdapter(this, this)
-//        binding.recyclerView.adapter = adapter
+        val userRepository = UserRepositoryImpl(apiService)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val res = userRepository.loginUser()
+
+            if (res is Response.Success) {
+                Log.d(
+                    "TAG",
+                    "onCreate: ${res.data}"
+                )
+            } else if (res is Response.Error) {
+                Log.e(
+                    "TAG",
+                    "onCreate: $res"
+                )
+            }
+//            val response = retrofit.loginUser("ali", "1234")
 //
-//        val getContent =
-//            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-//                if (result.resultCode == Activity.RESULT_OK) {
-//                    val note = result.data?.getSerializableExtra("note") as? Note
-//                    if (note != null) {
-//                        viewModel.insertNote(note)
-//                    }
+//            if (response.isSuccessful) {
+//                launch(Dispatchers.Main) {
+//                    Log.d(
+//                        "TAG",
+//                        "onCreate: ${
+//                            GsonBuilder().setPrettyPrinting().create().toJson(response.body())
+//                        }"
+//                    )
 //                }
 //            }
-//
-//        binding.fabNoteAdd.setOnClickListener {
-//            val intent = Intent(this, AddNoteActivity::class.java)
-//            getContent.launch(intent)
-//        }
-//
-//        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-//            override fun onQueryTextSubmit(query: String?): Boolean {
-//                return false
-//            }
-//
-//            override fun onQueryTextChange(newText: String?): Boolean {
-//                if (newText != null) {
-//                    adapter.filterList(newText)
-//                }
-//
-//                return true
-//            }
-//
-//        })
-//    }
-
-//    override fun onItemClicked(note: Note) {
-//        val intent = Intent(this@MainActivity, AddNoteActivity::class.java)
-//        intent.putExtra("current_note", note)
-//        updateNote.launch(intent)
-//    }
-//
-//    override fun onLongItemClicked(note: Note, cardView: CardView) {
-//        selectedNote = note
-//        popUpDisplay(cardView)
-//    }
-
-    private fun popUpDisplay(cardView: CardView) {
-        val popup = PopupMenu(this, cardView)
-        popup.setOnMenuItemClickListener(this@MainActivity)
-        popup.inflate(R.menu.pop_up_menu)
-        popup.show()
-    }
-    override fun onMenuItemClick(item: MenuItem?): Boolean {
-//        if (item?.itemId == R.id.delete_note) {
-//            viewModel.deleteNote(selectedNote)
-//            return true
-//        }
-        return false
+        }
     }
 }
